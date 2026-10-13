@@ -1,0 +1,18 @@
+# Installed by ai-engineering-orchestrator onboarding. Opens an issue when a
+# commit lands on the default branch without a green ai/gate.
+name: AI main guard
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  guard:
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
+      issues: write
+    uses: draygo/ai-engineering-orchestrator/.github/workflows/main-guard.yml@v1

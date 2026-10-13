@@ -1,0 +1,36 @@
+# Installed by ai-engineering-orchestrator onboarding. Calls the shared pipeline;
+# all logic lives in draygo/ai-engineering-orchestrator.
+name: AI pipeline
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions: {}
+
+jobs:
+  pipeline:
+    # Label events only matter for the two control labels. Other label changes
+    # must not start (and cancel) a run.
+    if: >-
+      (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
+      github.event.label.name == 'ai-pause' || github.event.label.name == 'ai-sensitive-ok'
+    concurrency:
+      group: ai-pipeline-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      issues: write
+    uses: draygo/ai-engineering-orchestrator/.github/workflows/pipeline.yml@v1
+    with:
+      enabled: ${{ vars.AI_ORCHESTRATOR_ENABLED != 'false' }}
+      # Swift/Xcode app: unit tests need macOS and Xcode.
+      runs-on: macos-26
+      step-timeout-minutes: 30
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      ORCHESTRATOR_APP_CLIENT_ID: ${{ secrets.ORCHESTRATOR_APP_CLIENT_ID }}
+      ORCHESTRATOR_APP_PRIVATE_KEY: ${{ secrets.ORCHESTRATOR_APP_PRIVATE_KEY }}
